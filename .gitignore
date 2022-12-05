@@ -3,3 +3,5 @@ papers/
 __pycache__/
 archive/
 *.DS_Store
+*.m~
+*.asv
