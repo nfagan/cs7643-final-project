@@ -5,6 +5,7 @@ import torch
 import numpy as np
 from scipy.io import loadmat
 import os
+import itertools
 
 ROOTP = os.getcwd()
 
@@ -52,28 +53,39 @@ def sample_generate(model, is_rnn, prime_seq, seq_len, device, verbose=False):
   return prime_seq.squeeze()
 
 def main():
-  prime_fname = 'src3'
-  model_fname = 'rpr-transformer-checkpoint.pth'
-  # model_fname = '120522_10_23_58-performance_rnn-checkpoint.pth'
+  prime_fnames = ['src3', 'eg2']
+  model_fnames = [
+    'rpr-transformer-checkpoint.pth',
+    'transformer-checkpoint.pth'
+    '120522_10_23_58-performance_rnn-checkpoint.pth',
+    'jsb-rpr-transformer-checkpoint.pth',
+    # todo: 'jsb-transformer-checkpoint.pth',
+    'jsb-performance_rnn-checkpoint.pth',
+  ]
+  
   target_seq_len = 1024
   seed = 0
 
-  device = get_device()
-  is_rnn = not ('transformer' in model_fname)
+  for p in itertools.product(prime_fnames, model_fnames):
+    prime_fname = p[0]
+    model_fname = p[1]
 
-  model = load_model(device, os.path.join(ROOTP, 'data/models', model_fname), is_rnn)
+    device = get_device()
+    is_rnn = not ('transformer' in model_fname)
 
-  prime_p = os.path.join(ROOTP, 'data/my-midi/{}.mat'.format(prime_fname))
-  prime_seq = load_prime_sequence(device, prime_p)
+    model = load_model(device, os.path.join(ROOTP, 'data/models', model_fname), is_rnn)
 
-  if seed is not None:
-    np.random.seed(seed)
+    prime_p = os.path.join(ROOTP, 'data/my-midi/{}.mat'.format(prime_fname))
+    prime_seq = load_prime_sequence(device, prime_p)
 
-  res = sample_generate(model, is_rnn, prime_seq, target_seq_len, device, verbose=True)
-  res = MidiConversionConfig().parse_events(res.cpu().numpy())
+    if seed is not None:
+      np.random.seed(seed)
 
-  dst_p = os.path.join(ROOTP, 'data/my-midi/{}-{}-gen.mid'.format(model_fname, prime_fname))
-  write_midi_file(res, dst_p)
+    res = sample_generate(model, is_rnn, prime_seq, target_seq_len, device, verbose=True)
+    res = MidiConversionConfig().parse_events(res.cpu().numpy())
+
+    dst_p = os.path.join(ROOTP, 'data/my-midi/{}-{}-gen.mid'.format(model_fname, prime_fname))
+    write_midi_file(res, dst_p)
 
 if __name__ == '__main__':
   main()
