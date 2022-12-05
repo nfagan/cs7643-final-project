@@ -12,13 +12,15 @@ from datetime import datetime
 ROOTP = os.getcwd()
 DEBUG = False
 IS_CLUSTER = True
-IS_RNN = True
+IS_RNN = False
 IS_JSB = True
+IS_RPR = False
 
 def save_model(run_id, model, hp, best=False):
   best_str = 'best' if best else ''
   data_str = 'jsb' if IS_JSB else 'maestro'
-  save_p = os.path.join(ROOTP, 'data/models/{}-{}-{}-{}-checkpoint.pth'.format(run_id, data_str, best_str, model.get_name()))
+  rpr_str = 'rpr' if (not IS_RNN) and IS_RPR else ''
+  save_p = os.path.join(ROOTP, 'data/models/{}-{}-{}-{}-{}-checkpoint.pth'.format(run_id, data_str, best_str, rpr_str, model.get_name()))
   torch.save({
     'model_state_dict': model.state_dict(),
     'hp': hp
@@ -104,7 +106,7 @@ def main():
     lr = 0.002
 
   else:
-    hp = transformer.hparams(use_rel_pos=True, is_cluster=IS_CLUSTER)
+    hp = transformer.hparams(use_rel_pos=IS_RPR, is_cluster=IS_CLUSTER)
     model = transformer.create_model_from_hparams(device, conv_conf.range, hp)
 
     batch_size = 2
