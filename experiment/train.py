@@ -2,37 +2,31 @@ import torch
 import torch.nn as nn
 import torch.optim
 import numpy as np
-from scipy.io import loadmat
 import perf_rnn
 import transformer
 import os
-import glob
 import util
 import time
 from datetime import datetime
 
 ROOTP = os.getcwd()
-DEBUG = True
+DEBUG = False
 IS_CLUSTER = True
-LOAD_AGGREGATE = True
-IS_RNN = False
+IS_RNN = True
+IS_JSB = True
 
 def save_model(run_id, model, hp, best=False):
   best_str = 'best' if best else ''
-  save_p = os.path.join(ROOTP, 'data/models/{}-{}-{}-checkpoint.pth'.format(run_id, best_str, model.get_name()))
+  data_str = 'jsb' if IS_JSB else 'maestro'
+  save_p = os.path.join(ROOTP, 'data/models/{}-{}-{}-{}-checkpoint.pth'.format(run_id, data_str, best_str, model.get_name()))
   torch.save({
     'model_state_dict': model.state_dict(),
     'hp': hp
   }, save_p)
 
-def get_source_files():
-  fs = glob.glob(os.path.join(ROOTP, 'data/maestro-performance-events/*.mat'))
-  if True:
-    fs.append(os.path.join(ROOTP, 'data/my-midi/eg.mat'))
-  return fs
-
 def load_indices():
-  return torch.load(os.path.join(ROOTP, 'data/maestro/maestro-aggregate.pth'))['indices']
+  agg_file = 'jsb/jsb-aggregate.pth' if IS_JSB else 'maestro/maestro-aggregate.pth'
+  return torch.load(os.path.join(ROOTP, 'data', agg_file))['indices']
 
 def gen_batch(inds, batch_size, seq_len, device):
   bi = torch.zeros(batch_size, seq_len).type(torch.int64).to(device)
@@ -46,21 +40,9 @@ def gen_batch(inds, batch_size, seq_len, device):
   return bi, ti
 
 def load_dataset():
-  if LOAD_AGGREGATE:
-    inds = load_indices()
-    if DEBUG:
-      inds = inds[:10]
-
-  else:
-    files = get_source_files()
-    if DEBUG:
-      files = files[:10]
-
-    inds = []
-    for i, file in enumerate(files):
-      print('{} of {}'.format(i+1, len(files)), flush=True)
-      f = loadmat(file)
-      inds.append(torch.tensor(util.parse_performance_event_indices(f)))
+  inds = load_indices()
+  if DEBUG:
+    inds = inds[:10]
 
   ntrain = int(np.floor(len(inds) * 0.7))
   nvalid = max(1, int(np.floor(len(inds) * 0.15)))
@@ -122,7 +104,7 @@ def main():
     lr = 0.002
 
   else:
-    hp = transformer.hparams(use_rel_pos=False, is_cluster=IS_CLUSTER)
+    hp = transformer.hparams(use_rel_pos=True, is_cluster=IS_CLUSTER)
     model = transformer.create_model_from_hparams(device, conv_conf.range, hp)
 
     batch_size = 2
@@ -131,6 +113,8 @@ def main():
     batches_per_epoch = 256
 
   seq_len = hp['seq_len'] if 'seq_len' in hp else 1024
+  if IS_JSB:
+    seq_len = 512
 
   if DEBUG:
     batches_per_epoch = 8
