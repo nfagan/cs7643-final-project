@@ -1,0 +1,5 @@
+data/
+papers/
+__pycache__/
+archive/
+*.DS_Store
