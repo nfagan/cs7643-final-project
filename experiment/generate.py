@@ -38,7 +38,7 @@ def sample_generate(model, is_rnn, prime_seq, seq_len, device, verbose=False):
   cell = None
   for i in range(seq_len - nprime):
     if verbose:
-      print('{} of {}'.format(i + 1, seq_len - nprime))
+      print('\t{} of {}'.format(i + 1, seq_len - nprime))
 
     if is_rnn:
       prime_res, cell = model(prime_seq, cell)
@@ -56,10 +56,10 @@ def main():
   prime_fnames = ['src3', 'eg2']
   model_fnames = [
     'rpr-transformer-checkpoint.pth',
-    'transformer-checkpoint.pth'
+    'transformer-checkpoint.pth',
     '120522_10_23_58-performance_rnn-checkpoint.pth',
     'jsb-rpr-transformer-checkpoint.pth',
-    # todo: 'jsb-transformer-checkpoint.pth',
+    'jsb-transformer-checkpoint.pth',
     'jsb-performance_rnn-checkpoint.pth',
   ]
   
