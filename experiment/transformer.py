@@ -90,10 +90,10 @@ class Transformer(nn.Module):
     return self.feedforward(atten)
 
 class TransformerModel(nn.Module):
-  def __init__(self, device, num_decoder_layers, vocab_size, embed_dim, num_heads, hs_ff, seq_len, rel_embed_dist, dropout) -> None:
+  def __init__(self, device, num_decoder_layers, vocab_size, embed_dim, num_heads, hs_ff, seq_len, rel_embed_dist, dropout, disable_pos_embed=False) -> None:
     super().__init__()
     self.embed = nn.Embedding(vocab_size, embed_dim)
-    self.pos_embed = nn.Embedding(seq_len, embed_dim)
+    self.pos_embed = None if disable_pos_embed else nn.Embedding(seq_len, embed_dim)
     self.transformer = nn.Sequential(
       *[Transformer(embed_dim, rel_embed_dist, hs_ff=hs_ff, nh=num_heads, device=device, dropout=dropout) for _ in range(num_decoder_layers)]
     )
@@ -102,9 +102,12 @@ class TransformerModel(nn.Module):
     self.device = device
 
   def get_embedding(self, x):
-    sample_range = torch.arange(0, x.shape[1]).repeat(x.shape[0], 1).to(self.device)
-    pe = self.pos_embed(sample_range)
-    return pe + self.embed(x)
+    if self.pos_embed is not None:
+      sample_range = torch.arange(0, x.shape[1]).repeat(x.shape[0], 1).to(self.device)
+      pe = self.pos_embed(sample_range)
+      return pe + self.embed(x)
+    else:
+      return self.embed(x)
 
   def forward(self, x):
     return self.output(self.transformer(self.get_embedding(x)))
@@ -113,13 +116,16 @@ class TransformerModel(nn.Module):
     return 'transformer'
 
 def create_model_from_hparams(device, vocab_size, p):
+  get = lambda d, k, v: v if k not in d else d[k]
+
   model = TransformerModel(
     device, p['num_decoder_layers'], vocab_size, 
     p['embed_dim'], p['num_heads'], p['hs_ff'], 
-    p['seq_len'], p['rel_embed_dist'], p['dropout']).to(device)
+    p['seq_len'], p['rel_embed_dist'], p['dropout'], 
+    disable_pos_embed=get(p, 'disable_pos_embed', False)).to(device)
   return model
 
-def hparams(use_rel_pos=True, is_cluster=False):
+def hparams(use_rel_pos=True, disable_pos_embed=False, is_cluster=False):
   seq_len = 1024
   embed_dim = 128
   num_heads = 4
@@ -143,5 +149,6 @@ def hparams(use_rel_pos=True, is_cluster=False):
     'num_decoder_layers': num_decoder_layers,
     'dropout': dropout,
     'rel_embed_dist': rel_embed_dist,
+    'disable_pos_embed': disable_pos_embed,
     'hs_ff': hs_ff
   }

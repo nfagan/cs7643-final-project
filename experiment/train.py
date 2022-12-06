@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.optim
 import numpy as np
+from scipy.io import savemat
 import perf_rnn
 import transformer
 import os
@@ -14,17 +15,20 @@ DEBUG = False
 IS_CLUSTER = True
 IS_RNN = False
 IS_JSB = True
-IS_RPR = False
+IS_RPR = True
+DISABLE_POS_EMBED = True
 
-def save_model(run_id, model, hp, best=False):
+def save_model(run_id, model, hp, stats, best=False):
   best_str = 'best' if best else ''
   data_str = 'jsb' if IS_JSB else 'maestro'
   rpr_str = 'rpr' if (not IS_RNN) and IS_RPR else ''
-  save_p = os.path.join(ROOTP, 'data/models/{}-{}-{}-{}-{}-checkpoint.pth'.format(run_id, data_str, best_str, rpr_str, model.get_name()))
+  fname = '{}-{}-{}-{}-{}'.format(run_id, data_str, best_str, rpr_str, model.get_name())
   torch.save({
     'model_state_dict': model.state_dict(),
-    'hp': hp
-  }, save_p)
+    'hp': hp,
+    'stats': stats
+  }, os.path.join(ROOTP, 'data/models', '{}-checkpoint.pth'.format(fname)))
+  savemat(os.path.join(ROOTP, 'data/models', '{}-stats.mat'.format(fname)), stats)
 
 def load_indices():
   agg_file = 'jsb/jsb-aggregate.pth' if IS_JSB else 'maestro/maestro-aggregate.pth'
@@ -106,7 +110,7 @@ def main():
     lr = 0.002
 
   else:
-    hp = transformer.hparams(use_rel_pos=IS_RPR, is_cluster=IS_CLUSTER)
+    hp = transformer.hparams(use_rel_pos=IS_RPR, disable_pos_embed=DISABLE_POS_EMBED, is_cluster=IS_CLUSTER)
     model = transformer.create_model_from_hparams(device, conv_conf.range, hp)
 
     batch_size = 2
@@ -132,32 +136,42 @@ def main():
 
   print('Model: ', model.get_name(), 'HParams: ', hp, flush=True)
 
-  best_acc = 0.
+  epoch_stats = {'loss': [], 'acc': [], 'valid_loss': [], 'valid_acc': [], 'best_acc': 0.}
   for ep in range(num_epochs):
     model.train()
 
+    batch_acc = 0.
+    batch_loss = 0.
     for i in range(batches_per_epoch):
       t0 = time.time()
 
       bi, ti = gen_batch(train_inds, batch_size, seq_len, device)
       loss, acc = train_step(model, is_rnn, optim, crit, bi, ti)
+      batch_acc += acc
+      batch_loss += loss
 
       tstep = time.time() - t0
       print('{} of {}; Loss: {}; Acc: {}; T: {}; T_Total: {}'.format(
         i+1, batches_per_epoch, loss, acc, tstep, time.time() - T0), flush=True)
+
+    epoch_stats['loss'].append(batch_loss / batches_per_epoch)
+    epoch_stats['acc'].append(batch_acc / batches_per_epoch)
     
     model.eval()
-    if not DEBUG:
-      save_model(RUN_ID, model, hp)
-
     with torch.no_grad():
       bi, ti = gen_batch(valid_inds, batch_size, seq_len, device)
       valid_loss, acc = evaluate(model, is_rnn, crit, bi, ti)
       print('{} of {} | Valid Loss: {}; Acc: {}'.format(ep+1, num_epochs, valid_loss, acc), flush=True)
 
-      if not DEBUG and acc > best_acc:
-        best_acc = acc
-        save_model(RUN_ID, model, hp, best=True)
+      epoch_stats['valid_loss'].append(valid_loss)
+      epoch_stats['valid_acc'].append(acc)
+
+      if not DEBUG and acc > epoch_stats['best_acc']:
+        epoch_stats['best_acc'] = acc
+        save_model(RUN_ID, model, hp, epoch_stats, best=True)
+
+    if not DEBUG:
+      save_model(RUN_ID, model, hp, epoch_stats)
 
 if __name__ == '__main__':
   main()

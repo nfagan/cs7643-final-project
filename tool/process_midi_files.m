@@ -8,7 +8,7 @@ perf_events = gen_perf_events( mid );
 
 %%
 
-name = 'src3';
+name = 'solo_flute';
 mid_file = fullfile( proj_root, 'data/my-midi/', sprintf('%s.mid', name) );
 mid = read_midi_file( mid_file, bpm );
 perf_events = gen_perf_events( mid, true );

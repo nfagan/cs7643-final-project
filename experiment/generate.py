@@ -53,7 +53,7 @@ def sample_generate(model, is_rnn, prime_seq, seq_len, device, verbose=False):
   return prime_seq.squeeze()
 
 def main():
-  prime_fnames = ['src3', 'eg2']
+  prime_fnames = ['src3', 'eg2', 'eg3']
   model_fnames = [
     'rpr-transformer-checkpoint.pth',
     'transformer-checkpoint.pth',
@@ -62,6 +62,9 @@ def main():
     'jsb-transformer-checkpoint.pth',
     'jsb-performance_rnn-checkpoint.pth',
   ]
+
+  model_fnames = ['rpr-transformer-checkpoint.pth', 'jsb-rpr-transformer-checkpoint.pth']
+  prime_fnames = ['solo_flute']
   
   target_seq_len = 1024
   seed = 0
