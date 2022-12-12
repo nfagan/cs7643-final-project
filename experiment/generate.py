@@ -32,6 +32,9 @@ def load_prime_sequence(device, prime_p):
   prime_seq = prime_seq.reshape(1, len(prime_seq)).to(device)
   return prime_seq
 
+def null_prime_sequence(device):
+  return torch.zeros((1, 1)).type(torch.int64).to(device)
+
 def sample_generate(model, is_rnn, prime_seq, seq_len, device, verbose=False):
   nprime = prime_seq.shape[1]
   assert seq_len >= nprime
@@ -53,6 +56,8 @@ def sample_generate(model, is_rnn, prime_seq, seq_len, device, verbose=False):
   return prime_seq.squeeze()
 
 def main():
+  num_unconditioned = 8
+
   prime_fnames = ['src3', 'eg2', 'eg3']
   model_fnames = [
     'rpr-transformer-checkpoint.pth',
@@ -69,6 +74,10 @@ def main():
   target_seq_len = 1024
   seed = 0
 
+  if num_unconditioned > 0:
+    prime_fnames = ['seq-{}'.format(x) for x in range(num_unconditioned)]
+    seed = None
+
   for p in itertools.product(prime_fnames, model_fnames):
     prime_fname = p[0]
     model_fname = p[1]
@@ -78,8 +87,11 @@ def main():
 
     model = load_model(device, os.path.join(ROOTP, 'data/models', model_fname), is_rnn)
 
-    prime_p = os.path.join(ROOTP, 'data/my-midi/{}.mat'.format(prime_fname))
-    prime_seq = load_prime_sequence(device, prime_p)
+    if num_unconditioned == 0:
+      prime_p = os.path.join(ROOTP, 'data/my-midi/{}.mat'.format(prime_fname))
+      prime_seq = load_prime_sequence(device, prime_p)
+    else:
+      prime_seq = null_prime_sequence(device)
 
     if seed is not None:
       np.random.seed(seed)
