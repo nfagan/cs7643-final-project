@@ -6,3 +6,5 @@ archive/
 *.m~
 *.asv
 note.txt
+plots/
+report/
