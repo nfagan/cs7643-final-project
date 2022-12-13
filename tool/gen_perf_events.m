@@ -1,6 +1,7 @@
-function perf_events = gen_perf_events(mid, look_for_note_off)
+function [perf_events, note_info] = gen_perf_events(mid, look_for_note_off, skip_invalid)
 
 if ( nargin < 2 ), look_for_note_off = false; end
+if ( nargin < 3 ), skip_invalid = false; end
 
 mid_types = [ mid.Type ];
 mid_ts = [ mid.Timestamp ];
@@ -69,7 +70,11 @@ for i = 1:numel(note_on_inds)
   try
     assert( numel(off_ind) == 1 );
   catch err
-    throw( err );
+    if ( skip_invalid )
+      continue;
+    else
+      throw( err );
+    end
   end
   
   next_on_ind = find( is_on & mid_notes == note_num & seq > ni, 1 );
