@@ -18,5 +18,5 @@ With conda: create a new environment with Python version >= 3.9 and activate it.
 
 Alternatively, if `num_unconditioned` is greater than 0, `prime_fnames` is ignored and the first model checkpoint in `model_fnames` is used to generate unconditioned note sequences. 
 
-[1](https://arxiv.org/abs/1809.04281)
-[2](https://link.springer.com/article/10.1007/s00521-018-3758-9)
+[Huang et al. [1]](https://arxiv.org/abs/1809.04281)
+[Oore et al. [2]](https://link.springer.com/article/10.1007/s00521-018-3758-9)
