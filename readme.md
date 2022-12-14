@@ -17,3 +17,6 @@ With conda: create a new environment with Python version >= 3.9 and activate it.
 `python experiment/generate.py` loads trained model checkpoints to generate conditioned or unconditioned MIDI note sequences. In `generate.py`, locate `main`. Specify a list of model checkpoint filenames `model_fnames` and priming MIDI note sequence filenames `prime_fnames`. Model checkpoints should be saved in `data/models` and priming sequences in `data/my-midi`. A completed sequence will be generated for each combination of model and priming sequence.
 
 Alternatively, if `num_unconditioned` is greater than 0, `prime_fnames` is ignored and the first model checkpoint in `model_fnames` is used to generate unconditioned note sequences. 
+
+[1](https://arxiv.org/abs/1809.04281)
+[2](https://link.springer.com/article/10.1007/s00521-018-3758-9)
