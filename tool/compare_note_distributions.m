@@ -28,6 +28,7 @@ real_mid_files = shared_utils.io.find( fullfile(proj_root, 'data/maestro/maestro
 real_mid_files = real_mid_files(randperm(numel(real_mid_files), 8))';
 
 for i = 1:numel(real_mid_files)
+  fprintf( '\n %d of %d', i, numel(real_mid_files) );
   [~, note_info] = gen_perf_events( read_midi_file( real_mid_files{i}, bpm ) );
   real_note_nums = [ real_note_nums; note_info(:, 3) ];
   real_note_vels = [ real_note_vels; note_info(:, 4) ];
@@ -52,7 +53,7 @@ xlabel( ax1, 'Note Pitch (MIDI note number)' );
 function plot_comparison(ax, note_nums, note_vels)
 
 assert( numel(note_nums) == numel(note_vels) );
-num_plot = min( 5e3, numel(note_nums) );
+num_plot = min( 1e3, numel(note_nums) );
 
 hold( ax, 'on' );
 xlim( ax, [30, 105] );

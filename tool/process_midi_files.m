@@ -38,6 +38,18 @@ end
 
 %%
 
+dst_p = fullfile( proj_root, 'data/jsb-performance-events' );
+dst_files = shared_utils.io.find( dst_p, '.mat' );
+
+seq_lens = zeros( numel(dst_files), 1 );
+parfor i = 1:numel(dst_files)
+  fprintf( '\n %d of %d', i, numel(dst_files) );
+  f = shared_utils.io.fload( dst_files{i} );
+  seq_lens(i) = numel( f );
+end
+
+%%
+
 function do_save(p, var)
 save( p, 'var' );
 end

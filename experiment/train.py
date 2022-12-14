@@ -14,7 +14,7 @@ ROOTP = os.getcwd()
 DEBUG = False
 IS_CLUSTER = True
 IS_RNN = False
-IS_JSB = True
+IS_JSB = False
 IS_RPR = True
 DISABLE_POS_EMBED = True
 

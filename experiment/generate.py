@@ -33,7 +33,7 @@ def load_prime_sequence(device, prime_p):
   return prime_seq
 
 def null_prime_sequence(device):
-  return torch.zeros((1, 1)).type(torch.int64).to(device)
+  return torch.zeros((1, 2)).type(torch.int64).to(device)
 
 def sample_generate(model, is_rnn, prime_seq, seq_len, device, verbose=False):
   nprime = prime_seq.shape[1]
@@ -75,6 +75,7 @@ def main():
   seed = 0
 
   if num_unconditioned > 0:
+    model_fnames = model_fnames[:1]
     prime_fnames = ['seq-{}'.format(x) for x in range(num_unconditioned)]
     seed = None
 
